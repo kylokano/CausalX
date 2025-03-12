@@ -1,0 +1,68 @@
+# dataset config
+seed: 2020
+data_path: reasons_cf_datasets/
+field_separator: "\t"
+seq_separator: " "
+USER_ID_FIELD: user_id
+ITEM_ID_FIELD: item_id
+# RATING_FIELD: rating
+# TIME_FIELD: timestamp
+NEG_PREFIX: neg_
+ITEM_LIST_LENGTH_FIELD: item_length
+LIST_SUFFIX: _list
+MAX_ITEM_LIST_LENGTH: 10
+POSITION_FIELD: position_id
+load_col:
+    inter: [user_id, item_id, reasons_id]
+
+log_wandb: True #Whether or not to use Weights & Biases(W&B). If True, use W&B to visualize configs and metrics of different experiments, otherwise it will not be used. Defaults to False.
+wandb_project: recbole #The project to conduct experiments in W&B. Defaults to 'recbole'.
+shuffle: True #Whether or not to shuffle the training data before each epoch. Defaults to True.
+
+# data filtering for interactions
+# val_interval:
+#     rating: "[3,inf)"    
+# unused_col: 
+#     inter: [rating]
+
+# user_inter_num_interval: "[10,inf)"
+# item_inter_num_interval: "[10,inf)"
+
+# training and evaluation
+epochs: 500
+train_batch_size: 4096
+eval_args:
+    split: {'RS': [0.95,0.05,0]}
+    mode: {'valid': 'full', 'test': 'full'}
+    order: RO
+    limited:
+        is_limited: False
+        pos_eval_nums: 2
+        neg_eval_nums: 18
+
+# config["eval_args"]["limited"]["is_limited"]
+# disable negative sampling
+
+train_neg_sample_args:
+  distribution: uniform #decides the distribution of negative items in sampling pools. Now we support two kinds of distribution: ['uniform', 'popularity']. uniform means uniformly select negative items while popularity means select negative items based on their popularity (Counter(item) in .inter file). The default value is uniform.
+  sample_num: 10 #decides the number of negative samples we intend to take. The default value is 1.
+  dynamic: False # decides whether we adopt dynamic negative sampling. The default value is False.
+  candidate_num: 0
+repeatable: True
+
+# disable negative sampling
+metrics: ['Recall', 'MRR', 'NDCG', 'Hit', 'Precision'] #Evaluation metrics. Defaults to ['Recall', 'MRR', 'NDCG', 'Hit', 'Precision']. Range in the following table:
+topk: [1,2,3,5] #The value of k for topk evaluation metrics. Defaults to 10.
+valid_metric: Hit@3 #The evaluation metric for early stopping. It must be one of used metrics. Defaults to 'MRR@10'.
+eval_batch_size: 1 #The evaluation batch size. Defaults to 4096.
+metric_decimal_place: 4 #The decimal place of metric scores. Defaults to 4.
+stopping_step: 50 #The number of epochs to wait before early stop. Defaults to 20.
+
+
+reasons_sampler: True
+
+start_reasons_ratio: 0.1
+end_reasons_ratio: 5
+start_epoch: 10
+end_epoch: 40
+

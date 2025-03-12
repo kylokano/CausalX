@@ -1,0 +1,12 @@
+prompt_type: train_reason # zero_shot, few_shot, get_golden_reason, provide_reason, random_train_reason, train_reason
+item_features: base_features
+model_name_or_path: gpt3.5
+llm_results_dir: /llm_results
+
+exp_name: llama2chat-zero_shot-base_features
+
+selected_reasons: raw
+union_methods: direct
+reason_numbers: 3
+train_reasons_topk: 5
+cf_dataset_name: cluster_results_MiniLM_UMAP20llama2-7b

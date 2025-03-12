@@ -1,0 +1,80 @@
+# Environment
+seed: 2020
+state: INFO #Logging level. Defaults to 'INFO'. Range in ['INFO', 'DEBUG', 'WARNING', 'ERROR', 'CRITICAL'].
+data_path: baselines/baseline_datasets #The path of input dataset. Defaults to 'dataset/'.
+checkpoint_dir: saved/baselines #The path to save checkpoint file. Defaults to 'saved/'.
+show_progress: True #Whether or not to show the progress bar of training and evaluation epochs. Defaults to True.
+save_dataset: False #Whether or not to save filtered dataset. If True, save filtered dataset, otherwise it will not be saved. Defaults to False.
+# dataset_save_path (str): The path of saved dataset. The tool will attempt to load the dataset from this path. If it equals to None, the tool will try to load the dataset from {checkpoint_dir}/{dataset}-{dataset_class_name}.pth. If the config of saved dataset is not equal to current config, the tool will create dataset from scratch. Defaults to None.
+save_dataloaders: False #Whether or not to save split dataloaders. If True, save split dataloaders, otherwise they will not be saved. Defaults to False.
+# dataloaders_save_path (str): The path of saved dataloaders. The tool will attempt to load the dataloaders from this path. If it equals to None, the tool will try to load the dataloaders from {checkpoint_dir}/{dataset}-for-{model}-dataloader.pth. If the config of saved dataloaders is not equal to current config, the tool will create dataloaders from scratch. Defaults to None.
+log_wandb: True #Whether or not to use Weights & Biases(W&B). If True, use W&B to visualize configs and metrics of different experiments, otherwise it will not be used. Defaults to False.
+wandb_project: explanain_rs_baseline #The project to conduct experiments in W&B. Defaults to 'recbole'.
+shuffle: True #Whether or not to shuffle the training data before each epoch. Defaults to True.
+
+# Data settings
+seq_len: None #Keys are field names of sequence features, values are maximum length of each sequence (which means too long sequences will be cut off). If not set, the sequences will not be cut off. Defaults to None.
+
+# Label for Point-wise DataLoader
+# threshold: The format is {k (str): v (float)}. 0/1 labels will be generated according to the value of inter_feat[k] and v. The rows with inter_feat[k] >= v will be labeled as positive, otherwise the label is negative. Note that at most one pair of k and v can exist in threshold. Defaults to None.
+
+# Sequential Model Needed¶
+MAX_ITEM_LIST_LENGTH: 50 #Maximum length of each generated sequence. Defaults to 50.
+# POSITION_FIELD (str) : Field name of the generated position sequence. For sequence of length k, its position sequence is range(k). Note that this field will only be generated if this arg is not None. Defaults to position_id.
+
+#Selectively Loading¶
+load_col:
+    inter: [user_id, item_id]
+# load_col (dict) : Keys are the suffix of loaded atomic files, values are the list of field names to be loaded. If a suffix doesn’t exist in load_col, the corresponding atomic file will not be loaded. Note that if load_col is None, then all the existed atomic files will be loaded. Defaults to {inter: [user_id, item_id]}.
+# unload_col (dict) : Keys are suffix of loaded atomic files, values are list of field names NOT to be loaded. Note that load_col and unload_col can not be set at the same time. Defaults to None.
+# unused_col (dict) : Keys are suffix of loaded atomic files, values are list of field names which are loaded for data processing but will not be used in model. E.g. the time_field may be used for time ordering but model does not use this field. Defaults to None.
+# additional_feat_suffix (list): Control loading additional atomic files. E.g. if you want to load features from ml-100k.hello, just set this arg as additional_feat_suffix: [hello]. Features of additional features will be stored in Dataset.feat_list. Defaults to None.
+# numerical_features (list): The numerical features to be embed for context-aware methods. Defaults to None.
+
+
+# training settings
+epochs: 300
+train_batch_size: 4096
+learner: adam #The name of used optimizer. Defaults to 'adam'. Range in ['adam', 'sgd', 'adagrad', 'rmsprop', 'sparse_adam'].
+learning_rate: 0.001 #Learning rate. Defaults to 0.001.
+train_neg_sample_args:
+  distribution: uniform #decides the distribution of negative items in sampling pools. Now we support two kinds of distribution: ['uniform', 'popularity']. uniform means uniformly select negative items while popularity means select negative items based on their popularity (Counter(item) in .inter file). The default value is uniform.
+  sample_num: 10 #decides the number of negative samples we intend to take. The default value is 1.
+  dynamic: False # decides whether we adopt dynamic negative sampling. The default value is False.
+  candidate_num: 0 # decides the number of candidate negative items when dynamic negative sampling. The default value is 0.
+eval_step: 2 #The number of training epochs before an evaluation on the valid dataset. If it is less than 1, the model will not be evaluated on the valid dataset. Defaults to 1.
+stopping_step: 20 #The threshold for validation-based early stopping. Defaults to 10.
+#clip_grad_norm (dict) : The args of clip_grad_norm_ which will clip gradient norm of model. Defaults to None.
+#loss_decimal_place(int): The decimal place of training loss. Defaults to 4.
+#weight_decay (float) : The weight decay (L2 penalty), used for optimizer. Default to 0.0.
+#require_pow (bool): The sign identifies whether the power operation is performed based on the norm in EmbLoss. Defaults to False.
+#enable_amp (bool): The parameter determines whether to use mixed precision training. Defaults to False.
+#enable_scaler (bool): The parameter determines whether to use GradScaler that is often used with mixed precision training to avoid gradient precision overflow. Defaults to False.
+
+# data filtering for interactions
+# val_interval:
+#     rating: "[3,inf)"    
+# unused_col: 
+#     inter: [rating]
+
+# user_inter_num_interval: "[10,inf)"
+# item_inter_num_interval: "[10,inf)"
+
+# Evaluation settings
+eval_args:
+  group_by: none #decides how we group the data in .inter. Now we support two kinds of grouping strategies: ['user', 'none']. If the value of group_by is user, the data will be grouped by the column of USER_ID_FIELD and split in user dimension. If the value is none, the data won’t be grouped. The default value is user.
+  order: RO #decides how we sort the data in .inter. Now we support two kinds of ordering strategies: ['RO', 'TO'], which denotes the random ordering and temporal ordering. For RO, we will shuffle the data and then split them in this order. For TO, we will sort the data by the column of TIME_FIELD in ascending order and the split them in this order. The default value is RO.
+  split: {'RS': [0.9,0.1,0]} #decides how we split the data in .inter. Now we support two kinds of splitting strategies: ['RS','LS'], which denotes the ratio-based data splitting and leave-one-out data splitting. If the key of split is RS, you need to set the splitting ratio like [0.8,0.1,0.1], [7,2,1] or [8,0,2], which denotes the ratio of training set, validation set and testing set respectively. If the key of split is LS, now we support three kinds of LS mode: ['valid_and_test', 'valid_only', 'test_only'] and you should choose one mode as the value of LS. The default value of split is {'RS': [0.8,0.1,0.1]}.
+  mode: {'valid': 'uni20', 'test': 'uni20'} #decides the data range when we evaluate the model during valid and test phase. Now we support four kinds of evaluation mode: ['full','unixxx','popxxx','labeled']. full , unixxx and popxxx are designed for the evaluation on implicit feedback (data without label). For implicit feedback, we regard the items with observed interactions as positive items and those without observed interactions as negative items. full means evaluating the model on the set of all items. unixxx, for example uni100, means uniformly sample 100 negative items for each positive item in testing set, and evaluate the model on these positive items with their sampled negative items. popxxx, for example pop100, means sample 100 negative items for each positive item in testing set based on item popularity (Counter(item) in .inter file), and evaluate the model on these positive items with their sampled negative items. Here the xxx must be an integer. For explicit feedback (data with label), you should set the mode as labeled and we will evaluate the model based on your label. You can use valid and test as the dict key to set specific mode in different phases. The default value is full, which is equivalent to {'valid': 'full', 'test': 'full'}.
+  limited:
+      is_limited: True
+      pos_eval_nums: 2
+      neg_eval_nums: 18
+
+
+repeatable: True # Whether to evaluate the result with a repeatable recommendation scene. Note that it is disabled for sequential models as the recommendation is already repeatable. For other models, defaults to False.
+metrics: ['Recall', 'MRR', 'NDCG', 'Hit', 'Precision'] #Evaluation metrics. Defaults to ['Recall', 'MRR', 'NDCG', 'Hit', 'Precision']. Range in the following table:
+topk: [1,2,3,5] #The value of k for topk evaluation metrics. Defaults to 10.
+valid_metric: NDCG@5 #The evaluation metric for early stopping. It must be one of used metrics. Defaults to 'MRR@10'.
+eval_batch_size: 4096 #The evaluation batch size. Defaults to 4096.
+metric_decimal_place: 4 #The decimal place of metric scores. Defaults to 4.
